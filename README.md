@@ -24,4 +24,14 @@ and prioritize your changes according to what you think is most useful.
 current state, can be deployed easily on Heroku's free tier.
 3. In your submission, share with us what changes you made and how you would prioritize changes if you had more time.
 
+## Tasks list - change log
 
+- [ ] Highlight query text in result: like this is **query** string.
+- [ ] Keeps formating (newlines) as in original text
+- [ ] Provide phrases instead of [-250+i, i+250] text blocks
+- [ ] Implement case insensitive search
+- [ ] Avoid phrase repetition
+- [ ] Implement phrase search: like `"love to hate you"`
+- [ ] Allow several words in query: like `love hate`
+- [ ] Return book title near the result phrase
+- [ ] Prioritize search results based on statistics
