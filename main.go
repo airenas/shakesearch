@@ -73,18 +73,19 @@ func (s *Searcher) Load(filename string) error {
 	return nil
 }
 
-func (s *Searcher) Search(query string) []string {
+func (s *Searcher) Search(query string) [][]string {
 	idxs := s.SuffixArray.Lookup([]byte(query), -1)
-	results := []string{}
+	results := [][]string{}
 	for _, idx := range idxs {
 		results = append(results, s.makeResult(idx, query))
 	}
 	return results
 }
 
-func (s *Searcher) makeResult(idx int, query string) string {
+func (s *Searcher) makeResult(idx int, query string) []string {
 	str := s.CompleteWorks[idx-250 : idx+250]
-	return highlightText(str, query)
+	res := highlightText(str, query)
+	return strings.Split(res, "\n")
 }
 
 func highlightText(str, phr string) string {
