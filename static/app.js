@@ -14,10 +14,10 @@ const Controller = {
     const table = document.getElementById("table-body");
     const rows = [];
     for (let result of results) {
-      rows.push(`<tr>${result}<tr/>`);
+      rows.push(`<tr>${result}</tr><hr>`);
     }
     if (rows.length > 0) {
-      table.innerHTML = rows;
+      table.innerHTML = rows.join("");
     } else {
       table.innerHTML = `<tr>Sorry, no results for: <i>${query}</i><tr/>`;
     }
