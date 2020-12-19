@@ -7,7 +7,10 @@ serve:
 	PORT=$(port) go run main.go
 
 build:
-	$(GO_BUILD_ENV)go build -o bin/shakesearch	
+	$(GO_BUILD_ENV)go build -o bin/shakesearch
+
+deploy:
+	git push heroku master
 
 test:
 	go test ./...
