@@ -1,19 +1,23 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"index/suffixarray"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
+	"sync"
 )
 
 func main() {
 	searcher := Searcher{}
+	searcher.maxChars = 300
 	err := searcher.Load("completeworks.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -39,6 +43,9 @@ func main() {
 type Searcher struct {
 	CompleteWorks string
 	SuffixArray   *suffixarray.Index
+	PhraseIndexes []int
+
+	maxChars int
 }
 
 func handleSearch(searcher Searcher) func(w http.ResponseWriter, r *http.Request) {
@@ -64,13 +71,44 @@ func handleSearch(searcher Searcher) func(w http.ResponseWriter, r *http.Request
 }
 
 func (s *Searcher) Load(filename string) error {
-	dat, err := ioutil.ReadFile(filename)
+	file, err := os.Open(filename)
 	if err != nil {
 		return fmt.Errorf("Load: %w", err)
 	}
-	s.CompleteWorks = string(dat)
-	s.SuffixArray = suffixarray.New(dat)
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	sb := strings.Builder{}
+	for {
+		line, _, err := reader.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("Can't read: %w", err)
+		}
+		sb.WriteString(strings.TrimSpace(string(line)))
+		sb.WriteByte('\n')
+	}
+	s.CompleteWorks = sb.String()
+	s.index()
+	log.Printf("Loaded")
 	return nil
+}
+
+func (s *Searcher) index() {
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	func() {
+		defer wg.Done()
+		s.SuffixArray = suffixarray.New([]byte(s.CompleteWorks))
+		log.Printf("Suffix index done")
+	}()
+	func() {
+		defer wg.Done()
+		s.PhraseIndexes = indexPhrases(s.CompleteWorks)
+		log.Printf("Sentence index done")
+	}()
+	wg.Wait()
 }
 
 func (s *Searcher) Search(query string) [][]string {
@@ -83,11 +121,65 @@ func (s *Searcher) Search(query string) [][]string {
 }
 
 func (s *Searcher) makeResult(idx int, query string) []string {
-	str := s.CompleteWorks[idx-250 : idx+250]
+	str := s.getTextAt(idx)
 	res := highlightText(str, query)
 	return strings.Split(res, "\n")
 }
 
+func (s *Searcher) getTextAt(idx int) string {
+	pi := sort.Search(len(s.PhraseIndexes), func(i int) bool { return s.PhraseIndexes[i] > idx })
+	from, to := s.selectPos(pi - 1)
+	return s.CompleteWorks[from:to]
+}
+
+func (s *Searcher) selectPos(idx int) (int, int) {
+	from, to := idx, idx+1
+	l := len(s.PhraseIndexes)
+	if to > (l - 1) {
+		to = (l - 1)
+	}
+	changed := true
+	for changed {
+		changed = false
+		if from > 0 && (s.PhraseIndexes[to]-s.PhraseIndexes[from-1]) <= s.maxChars {
+			from--
+			changed = true
+		}
+		if to < (l-1) && (s.PhraseIndexes[to+1]-s.PhraseIndexes[from]) <= s.maxChars {
+			to++
+			changed = true
+		}
+	}
+	return s.PhraseIndexes[from], s.PhraseIndexes[to]
+}
+
 func highlightText(str, phr string) string {
 	return strings.ReplaceAll(str, phr, "<b>"+phr+"</b>")
+}
+
+func indexPhrases(str string) []int {
+	phraseIndicators := phraseEnds()
+	res := make([]int, 0)
+	l := len(str)
+	res = append(res, 0)
+	for i := 0; i < (l - 1); i++ {
+		if phraseStart(str[i:i+2], phraseIndicators) {
+			res = append(res, i+2)
+			i = i + 1
+		}
+	}
+	res = append(res, l)
+	return res
+}
+
+func phraseEnds() map[string]bool {
+	res := make(map[string]bool)
+	for _, pe := range []string{"\n\n", ".\n", "?\n", "!\n", ". ", "? ", "! "} {
+		res[pe] = true
+	}
+	return res
+}
+
+func phraseStart(str string, phrStrInd map[string]bool) bool {
+	return phrStrInd[str]
 }

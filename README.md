@@ -28,7 +28,7 @@ current state, can be deployed easily on Heroku's free tier.
 
 - [x] Highlight query text in result: like this is **query** string.
 - [x] Keep formating (newlines) as in original text
-- [ ] Provide phrases instead of [-250+i, i+250] blocks of text
+- [x] Provide phrases instead of [-250+i, i+250] blocks of text
 - [ ] Implement case insensitive search
 - [ ] Avoid phrase repetition
 - [ ] Implement phrase search: like `"love to hate you"`
