@@ -1,4 +1,4 @@
-module pulley.com/shakesearch
+module airenas/shakesearch
 
 go 1.15
 
