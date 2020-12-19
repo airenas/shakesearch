@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -76,7 +77,16 @@ func (s *Searcher) Search(query string) []string {
 	idxs := s.SuffixArray.Lookup([]byte(query), -1)
 	results := []string{}
 	for _, idx := range idxs {
-		results = append(results, s.CompleteWorks[idx-250:idx+250])
+		results = append(results, s.makeResult(idx, query))
 	}
 	return results
+}
+
+func (s *Searcher) makeResult(idx int, query string) string {
+	str := s.CompleteWorks[idx-250 : idx+250]
+	return highlightText(str, query)
+}
+
+func highlightText(str, phr string) string {
+	return strings.ReplaceAll(str, phr, "<b>"+phr+"</b>")
 }

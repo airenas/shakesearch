@@ -26,8 +26,8 @@ current state, can be deployed easily on Heroku's free tier.
 
 ## Tasks list - change log
 
-- [ ] Highlight query text in result: like this is **query** string.
-- [ ] Keeps formating (newlines) as in original text
+- [x] Highlight query text in result: like this is **query** string.
+- [ ] Keep formating (newlines) as in original text
 - [ ] Provide phrases instead of [-250+i, i+250] text blocks
 - [ ] Implement case insensitive search
 - [ ] Avoid phrase repetition
