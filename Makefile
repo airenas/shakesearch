@@ -1,9 +1,13 @@
 ########################################################
 -include Makefile.options.local
-port?=8000
+port?=
+GO_BUILD_ENV := CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 ########################################################
 serve:
 	PORT=$(port) go run main.go
+
+build:
+	$(GO_BUILD_ENV)go build -o bin/shakesearch	
 
 test:
 	go test ./...
